@@ -1,0 +1,91 @@
+---
+Title: Week 1 Discussion: Wrangling Data
+Author: Ian Morris
+Date: January 7th, 2024
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r}
+library(tidyverse)
+library(janitor)
+library(usdata)
+```
+
+
+#### Import Fracking Data
+
+```{r}
+# Import fracking data
+fracking <- read_csv(here::here("week1", "data", "registryupload_1.csv"))
+```
+
+#### Data exploration
+
+```{r}
+dim(fracking)
+str(fracking)
+View(fracking)
+```
+
+#### Clean Fracking Data
+
+```{r}
+fracking_clean <- fracking %>% 
+  # Clean names
+  janitor::clean_names() %>% 
+  # Remove AM from job_start_date 
+  dplyr::mutate(job_start_date = stringr::str_remove(job_start_date, " AM")) %>% 
+  # Change date type to datetime
+  dplyr::mutate(datetime_start = lubridate::mdy_hms(job_start_date)) %>% 
+  # Create year column
+  dplyr::mutate(year = year(datetime_start)) %>% 
+  # Select relevant columns
+  select(datetime_start, year, state_name, well_name, total_base_water_volume) %>% 
+  # Capitalize state names
+  dplyr::mutate(state_name = stringr::str_to_title(state_name)) %>% 
+  # Drop all rows with "?" in string
+  dplyr::filter(!stringr::str_detect(string=state_name, pattern = "\\?")) %>% 
+  # Convert state abbreviations to full names
+  dplyr::mutate(state_name = ifelse(test = str_length(state_name)==2,
+                             yes = usdata::abbr2state(state_name),
+                             no = state_name)) %>% 
+  # Correct misspelled state names
+  dplyr::mutate(state_name = case_when(
+    state_name == "Colordao" ~ "Colorado",
+    state_name == "Loiusiana" ~ "Louisiana",
+    state_name == "Louisianna" ~ "Louisiana",
+    state_name == "Lousiana" ~ "Louisiana",
+    state_name == "New Mexcio" ~ "New Mexico",
+    state_name == "Norh Dakota" ~ "North Dakota",
+    state_name == "Norht Dakota" ~ "North Dakota",
+    state_name == "North  Dakota" ~ "North Dakota",
+    state_name == "North Dakata" ~ "North Dakota",
+    state_name == "North Dakotta" ~ "North Dakota",
+    state_name == "Noth Dakota" ~ "North Dakota",
+    state_name == "Pennslvania" ~ "Pennsylvania",
+    state_name == "Pennsylavania" ~ "Pennsylvania",
+    state_name == "Pennsylvanya" ~ "Pennsylvania",
+    state_name == "Penssylvania" ~ "Pennsylvania",
+    state_name == "Texasa" ~ "Texas",
+    state_name == "Texs" ~ "Texas", 
+    state_name == "West Viginia" ~ "West Virginia",
+    state_name == "Wyominng" ~ "Wyoming", 
+    TRUE ~ state_name # copy over rest of state names from as-is
+    )) %>% 
+  # Remove any rows that do not have a true US state name in the state_name column
+  filter(state_name %in% usdata::state_stats$state) %>% 
+  # Add state_abb column
+  dplyr::mutate(state_abb = state2abbr(state_name)) %>% 
+  # Move state_abb columns next to state_name
+  dplyr::relocate(state_abb, .after = state_name) %>% 
+  # Dename water volume column
+  dplyr::rename(total_base_water_volume_gal = total_base_water_volume) %>% 
+  # Remove rows with NA volume observations
+  tidyr::drop_na(total_base_water_volume_gal) %>% 
+  # Reorder rows by date
+  dplyr::arrange(datetime_start)
+
+fracking_clean
+```
+
