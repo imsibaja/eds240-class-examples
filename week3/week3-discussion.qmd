@@ -1,26 +1,34 @@
 ---
 title: "Week3 Discussion"
 author: "Ian Morris-Sibaja"
+date: last-modified
 format: html
 ---
 
-## Quarto
 
-Quarto enables you to weave together content and executable code into a finished document. To learn more about Quarto see <https://quarto.org>.
-
-## Running Code
-
-When you click the **Render** button a document will be generated that includes both content and the output of embedded code. You can embed code like this:
+### Example 1
 
 ```{r}
-1 + 1
-```
-
-You can add options to executable code like this 
-
-```{r}
+#| warning: false
+#| message: false
 #| echo: false
-2 * 2
-```
+#| fig-alt: "A stacked histogram of penguin body masses per species where Gentoo has the highest average body mass (in g) over Adelie and Chinstrap species by x percent/ x grams."
 
-The `echo: false` option disables the printing of code (only output is displayed).
+library(ggplot2)
+library(palmerpenguins)
+
+ggplot(data = penguins, aes(x = body_mass_g, fill = species)) +
+  geom_histogram(alpha = 0.5, 
+                 position = "identity") +
+  scale_fill_manual(values = c("darkorange","purple","cyan4")) +
+  labs(x = "Body mass (g)",
+       y = "Frequency",
+       title = "Penguin body masses")
+```
+## Example 2: NYT
+
+![Monthly Global Temperature by Year ](week3-discussion_files/nyt-monthly-temp.png){fig-alt="Dot plot of monthly global temperature by year from 1850 to 2023 compared to the 20th century average. From 1975 onward, the yearly temperature is hotter than average, whereas prior to 1975 the temperature was cooler than average."}
+
+## Example 3: Chapman et al. 2024
+
+<img src="week3-discussion_files/chapman-etal-2024.png" alt="A heatmap of Total global observations species from the Global Biodiversity Information Facility (GBIF). The >2.6 billion species observations in the GBIF database are disproportionately present in high-income countries, particularly in North American and European countries." width="400px">
